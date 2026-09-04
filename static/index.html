@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小说写作助手</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>📚 小说写作助手</h1>
+    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色</p>
+  </header>
+
+  <main class="container">
+    <details class="panel settings-panel" id="settings-panel">
+      <summary>⚙️ API 设置（DeepSeek / OpenAI / 兼容接口）</summary>
+      <div class="field">
+        <label for="base-url">Base URL</label>
+        <input type="text" id="base-url" placeholder="https://api.deepseek.com">
+        <p class="hint">OpenAI 填 https://api.openai.com；Moonshot 填 https://api.moonshot.cn</p>
+      </div>
+      <div class="field">
+        <label for="model">模型名称</label>
+        <select id="model">
+          <option value="deepseek-v4-flash">deepseek-v4-flash（DeepSeek V4-Flash）</option>
+          <option value="deepseek-v4-pro">deepseek-v4-pro（DeepSeek V4-Pro）</option>
+          <option value="deepseek-chat">deepseek-chat（DeepSeek V3）</option>
+          <option value="gpt-4o-mini">gpt-4o-mini（OpenAI）</option>
+          <option value="gpt-4o">gpt-4o（OpenAI）</option>
+          <option value="o3-mini">o3-mini（OpenAI 推理）</option>
+          <option value="moonshot-v1-8k">moonshot-v1-8k（Kimi）</option>
+          <option value="moonshot-v1-32k">moonshot-v1-32k（Kimi）</option>
+          <option value="moonshot-v1-128k">moonshot-v1-128k（Kimi）</option>
+          <option value="glm-4-plus">glm-4-plus（智谱）</option>
+          <option value="qwen-plus">qwen-plus（通义千问）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="thinking">思考强度</label>
+        <select id="thinking">
+          <option value="">默认（自动）</option>
+          <option value="low">低（严谨、直白）</option>
+          <option value="medium">中（平衡）</option>
+          <option value="high">高（创意、发散）</option>
+        </select>
+        <p class="hint">控制生成内容的严谨程度与创造性（对应温度参数）</p>
+      </div>
+      <div class="field">
+        <label for="api-key">API Key</label>
+        <input type="password" id="api-key" placeholder="sk-...">
+      </div>
+      <div class="field">
+        <label for="save-dir">小说保存路径</label>
+        <input type="text" id="save-dir" placeholder="d:\Code\xiaoshuo\novels">
+        <p class="hint">生成的大纲将按小说名称保存到此目录（.md 文件）</p>
+      </div>
+      <div class="row">
+        <button id="save-config" class="btn secondary">保存设置到本机</button>
+        <span class="hint" id="config-hint"></span>
+      </div>
+    </details>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="outline">📚 大纲生成</button>
+      <button class="tab" data-tab="chapters">📑 章节梗概</button>
+      <button class="tab" data-tab="writing">✍️ 章节写作</button>
+      <button class="tab" data-tab="coherence">🔗 连贯性检查</button>
+      <button class="tab" data-tab="polish">🖋️ 文笔润色</button>
+    </nav>
+<!-- 大纲生成 -->
+    <section class="tab-panel active" id="panel-outline">
+      <section class="panel">
+        <h2>1. 故事灵感 / 提示词 <span class="req">*</span></h2>
+        <textarea id="prompt" rows="5" placeholder="例如：一个废柴大学生意外觉醒了能看见死亡倒计时的能力，为了改变身边人的命运，卷入了一场跨越百年的阴谋……"></textarea>
+      </section>
+
+      <section class="panel">
+        <h2>2. 大纲要求（可选）</h2>
+        <div class="field">
+          <label for="novel-name">小说名称（用于保存，可选）</label>
+          <input type="text" id="novel-name" placeholder="如：都市修仙之死亡倒计时">
+        </div>
+        <div class="field">
+          <label>题材类型（可多选）</label>
+          <select id="genre" data-multi>
+            <option value="">—— 选择题材 ——</option>
+            <optgroup label="B">
+              <option value="宝可梦">宝可梦</option>
+            </optgroup>
+            <optgroup label="C">
+              <option value="重生">重生</option>
+            </optgroup>
+            <optgroup label="D">
+              <option value="盗墓">盗墓</option>
+              <option value="第四天灾">第四天灾</option>
+              <option value="第一人称">第一人称</option>
+              <option value="谍战">谍战</option>
+              <option value="东方仙侠">东方仙侠</option>
+              <option value="东方玄幻">东方玄幻</option>
+              <option value="都市">都市</option>
+              <option value="都市高武">都市高武</option>
+              <option value="都市脑洞">都市脑洞</option>
+              <option value="都市日常">都市日常</option>
+              <option value="都市生活">都市生活</option>
+              <option value="都市异能">都市异能</option>
+              <option value="都市种田">都市种田</option>
+              <option value="断层">断层</option>
+            </optgroup>
+            <optgroup label="G">
+              <option value="搞笑轻松">搞笑轻松</option>
+              <option value="高武世界">高武世界</option>
+              <option value="古代">古代</option>
+              <option value="规则怪谈">规则怪谈</option>
+              <option value="国运">国运</option>
+            </optgroup>
+            <optgroup label="J">
+              <option value="架空">架空</option>
+              <option value="军事谍战">军事谍战</option>
+            </optgroup>
+            <optgroup label="K">
+              <option value="开局">开局</option>
+              <option value="抗战谍战">抗战谍战</option>
+              <option value="科幻">科幻</option>
+              <option value="克苏鲁">克苏鲁</option>
+              <option value="快穿">快穿</option>
+            </optgroup>
+            <optgroup label="L">
+              <option value="历史">历史</option>
+              <option value="历史古代">历史古代</option>
+              <option value="历史脑洞">历史脑洞</option>
+              <option value="灵气复苏">灵气复苏</option>
+              <option value="灵异">灵异</option>
+            </optgroup>
+            <optgroup label="M">
+              <option value="萌宠">萌宠</option>
+              <option value="末日求生">末日求生</option>
+              <option value="末世">末世</option>
+            </optgroup>
+            <optgroup label="N">
+              <option value="男频衍生">男频衍生</option>
+            </optgroup>
+            <optgroup label="Q">
+              <option value="其他">其他</option>
+              <option value="清朝">清朝</option>
+              <option value="轻小说">轻小说</option>
+            </optgroup>
+            <optgroup label="S">
+              <option value="赛博朋克">赛博朋克</option>
+              <option value="仕途">仕途</option>
+              <option value="宋朝">宋朝</option>
+            </optgroup>
+            <optgroup label="T">
+              <option value="体育">体育</option>
+              <option value="天灾">天灾</option>
+            </optgroup>
+            <optgroup label="W">
+              <option value="武将">武将</option>
+              <option value="武侠">武侠</option>
+              <option value="无限流">无限流</option>
+            </optgroup>
+            <optgroup label="X">
+              <option value="西方奇幻">西方奇幻</option>
+              <option value="系统流">系统流</option>
+              <option value="仙侠">仙侠</option>
+              <option value="修仙">修仙</option>
+              <option value="玄幻">玄幻</option>
+              <option value="玄幻脑洞">玄幻脑洞</option>
+              <option value="悬疑灵异">悬疑灵异</option>
+              <option value="悬疑脑洞">悬疑脑洞</option>
+              <option value="悬疑推理">悬疑推理</option>
+            </optgroup>
+            <optgroup label="Y">
+              <option value="言情">言情</option>
+              <option value="异能">异能</option>
+              <option value="异世大陆">异世大陆</option>
+              <option value="影视小说">影视小说</option>
+              <option value="游戏动漫">游戏动漫</option>
+              <option value="游戏竞技">游戏竞技</option>
+              <option value="娱乐圈">娱乐圈</option>
+            </optgroup>
+            <optgroup label="Z">
+              <option value="综漫">综漫</option>
+              <option value="综影视">综影视</option>
+              <option value="种田">种田</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label>情节标签（可多选）</label>
+          <select id="plot-tags" data-multi>
+            <option value="">—— 选择情节标签 ——</option>
+            <optgroup label="A">
+              <option value="奥特同人">奥特同人</option>
+            </optgroup>
+            <optgroup label="C">
+              <option value="重生">重生</option>
+              <option value="宠物">宠物</option>
+              <option value="穿书">穿书</option>
+              <option value="传统玄幻">传统玄幻</option>
+              <option value="穿越">穿越</option>
+            </optgroup>
+            <optgroup label="D">
+              <option value="打脸">打脸</option>
+              <option value="大秦">大秦</option>
+              <option value="大唐">大唐</option>
+              <option value="电竞">电竞</option>
+              <option value="钓鱼">钓鱼</option>
+              <option value="迪化">迪化</option>
+              <option value="动漫衍生">动漫衍生</option>
+              <option value="都市修真">都市修真</option>
+            </optgroup>
+            <optgroup label="E">
+              <option value="二次元">二次元</option>
+            </optgroup>
+            <optgroup label="F">
+              <option value="发家致富">发家致富</option>
+              <option value="废土">废土</option>
+              <option value="封神">封神</option>
+              <option value="副本">副本</option>
+            </optgroup>
+            <optgroup label="G">
+              <option value="高手下山">高手下山</option>
+              <option value="公版衍生">公版衍生</option>
+            </optgroup>
+            <optgroup label="H">
+              <option value="海贼">海贼</option>
+              <option value="海贼王">海贼王</option>
+              <option value="黑道">黑道</option>
+              <option value="黑化">黑化</option>
+              <option value="黑科技">黑科技</option>
+              <option value="洪荒">洪荒</option>
+              <option value="红楼衍生">红楼衍生</option>
+              <option value="魂穿">魂穿</option>
+              <option value="火影">火影</option>
+            </optgroup>
+            <optgroup label="J">
+              <option value="剑道">剑道</option>
+              <option value="剑修">剑修</option>
+              <option value="基建">基建</option>
+              <option value="惊悚游戏">惊悚游戏</option>
+              <option value="九叔">九叔</option>
+              <option value="绝地逃生">绝地逃生</option>
+            </optgroup>
+            <optgroup label="K">
+              <option value="卡牌">卡牌</option>
+              <option value="科举">科举</option>
+              <option value="空间">空间</option>
+            </optgroup>
+            <optgroup label="L">
+              <option value="聊天群">聊天群</option>
+              <option value="灵魂互换">灵魂互换</option>
+              <option value="灵异">灵异</option>
+              <option value="龙珠">龙珠</option>
+            </optgroup>
+            <optgroup label="M">
+              <option value="漫威">漫威</option>
+              <option value="明朝">明朝</option>
+              <option value="末世">末世</option>
+            </optgroup>
+            <optgroup label="Q">
+              <option value="奇幻">奇幻</option>
+            </optgroup>
+            <optgroup label="R">
+              <option value="如懿衍生">如懿衍生</option>
+            </optgroup>
+            <optgroup label="S">
+              <option value="三国">三国</option>
+              <option value="山海经">山海经</option>
+              <option value="升级流">升级流</option>
+              <option value="神豪">神豪</option>
+              <option value="神奇宝贝">神奇宝贝</option>
+              <option value="十日衍生">十日衍生</option>
+              <option value="双重生">双重生</option>
+              <option value="双系统">双系统</option>
+              <option value="四合院">四合院</option>
+            </optgroup>
+            <optgroup label="T">
+              <option value="推理">推理</option>
+              <option value="囤物资">囤物资</option>
+            </optgroup>
+            <optgroup label="W">
+              <option value="外卖">外卖</option>
+              <option value="网游">网游</option>
+              <option value="无敌">无敌</option>
+              <option value="无后宫">无后宫</option>
+              <option value="无脑爽">无脑爽</option>
+              <option value="无限流">无限流</option>
+            </optgroup>
+            <optgroup label="X">
+              <option value="仙侠">仙侠</option>
+              <option value="星际">星际</option>
+              <option value="系统">系统</option>
+              <option value="修仙">修仙</option>
+              <option value="西游衍生">西游衍生</option>
+            </optgroup>
+            <optgroup label="Y">
+              <option value="娱乐圈">娱乐圈</option>
+            </optgroup>
+            <optgroup label="Z">
+              <option value="斩神">斩神</option>
+              <option value="斩神衍生">斩神衍生</option>
+              <option value="争霸">争霸</option>
+              <option value="甄嬛衍生">甄嬛衍生</option>
+              <option value="直播">直播</option>
+              <option value="捉鬼">捉鬼</option>
+              <option value="诸天万界">诸天万界</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="length">篇幅</label>
+            <select id="length">
+              <option value="">默认</option>
+              <option>短故事</option>
+              <option>短篇</option>
+              <option>中篇</option>
+              <option>长篇</option>
+              <option>超长篇</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="chapters">总章节数</label>
+            <select id="chapters">
+              <option value="">默认（自动）</option>
+              <option>1～10章</option>
+              <option>10～30章</option>
+              <option>30～50章</option>
+              <option>50～100章</option>
+              <option>100～200章</option>
+              <option>200～500章</option>
+              <option>500～800章</option>
+              <option>800～1200章</option>
+              <option>1200～1600章</option>
+              <option>1600～2000章</option>
+              <option>2000～2500章</option>
+              <option>2500章以上</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="pov">叙事视角</label>
+            <select id="pov">
+              <option value="">默认</option>
+              <option>第一人称</option>
+              <option>第三人称（限知）</option>
+              <option>第三人称（全知）</option>
+              <option>多视角切换</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tone">风格基调</label>
+            <select id="tone">
+              <option value="">默认</option>
+              <option>无厘头</option>
+              <option>轻松搞笑</option>
+              <option>沙雕欢乐</option>
+              <option>黑色幽默</option>
+              <option>荒诞讽刺</option>
+              <option>热血燃向</option>
+              <option>中二热血</option>
+              <option>黑暗深沉</option>
+              <option>冷峻硬核</option>
+              <option>紧张悬疑</option>
+              <option>悬疑烧脑</option>
+              <option>恐怖惊悚</option>
+              <option>悲伤虐心</option>
+              <option>温馨治愈</option>
+              <option>浪漫唯美</option>
+              <option>文艺清新</option>
+              <option>古风雅致</option>
+              <option>史诗宏大</option>
+              <option>现实残酷</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="extra">额外要求（可手动输入，或选择文件）</label>
+          <textarea id="extra" rows="2" placeholder="如：希望有反转结局 / 主角是反派 / 加入系统元素等（可选）"></textarea>
+          <div class="row" style="margin-top: 8px;">
+            <label class="btn secondary" for="extra-file">📂 选择额外要求文件</label>
+            <input type="file" id="extra-file" accept=".md,.txt,.markdown" hidden>
+            <span class="hint" id="extra-file-hint"></span>
+          </div>
+        </div>
+      </section>
+
+      <button id="generate" class="btn primary">✨ 生成小说大纲</button>
+    </section>
+<!-- 章节梗概 -->
+    <section class="tab-panel" id="panel-chapters">
+      <section class="panel">
+        <h2>从保存路径读取大纲</h2>
+        <div class="row">
+          <select id="novels-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已保存的小说 ——</option>
+          </select>
+          <button id="load-novel" class="btn secondary">读取大纲文件</button>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <label class="btn secondary" for="outline-file">📂 选择其他路径的大纲文件</label>
+          <input type="file" id="outline-file" accept=".md,.txt,.markdown" hidden>
+          <span class="hint" id="outline-file-hint"></span>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>小说大纲 <span class="req">*</span></h2>
+        <textarea id="chapters-outline" rows="10" placeholder="从上方读取，或手动粘贴大纲……"></textarea>
+      </section>
+      <section class="panel">
+        <h2>选项（可选）</h2>
+        <div class="field">
+          <label for="chapters-novel-name">小说名称（用于保存，可选）</label>
+          <input type="text" id="chapters-novel-name" placeholder="读取大纲时自动填入，也可手输">
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="chapters-count">总章节数（可输入）</label>
+            <input type="text" id="chapters-count" placeholder="如：50章 或 50">
+          </div>
+          <div class="field">
+            <label for="chapters-words">每章梗概字数</label>
+            <select id="chapters-words">
+              <option value="">默认（简明）</option>
+              <option>100字/章</option>
+              <option>200字/章</option>
+              <option>300字/章</option>
+              <option>500字/章</option>
+            </select>
+          </div>
+        </div>
+      </section>
+      <button id="expand-chapters" class="btn primary">📑 生成逐章梗概</button>
+    </section>
+
+    <!-- 章节写作 -->
+    <section class="tab-panel" id="panel-writing">
+      <section class="panel">
+        <h2>1. 选择小说章节梗概 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="summaries-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已生成的章节梗概 ——</option>
+          </select>
+          <button id="load-summary" class="btn secondary">读取梗概文件</button>
+        </div>
+        <p class="hint">读取后自动填充下方「故事梗概 / 大纲」，并列出前后章可选文件</p>
+      </section>
+      <section class="panel">
+        <h2>2. 故事梗概 / 大纲 <span class="req">*</span></h2>
+        <textarea id="writing-outline" rows="8" placeholder="从上方读取章节梗概，或手动粘贴……"></textarea>
+      </section>
+      <section class="panel">
+        <h2>3. 前后章梗概（用于保持连贯，可选）</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="prev-chapter-select">前章梗概</label>
+            <select id="prev-chapter-select"><option value="">—— 无 ——</option></select>
+          </div>
+          <div class="field">
+            <label for="next-chapter-select">后章梗概</label>
+            <select id="next-chapter-select"><option value="">—— 无 ——</option></select>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>前文正文（选择目标章节后自动读取，用于衔接）</h2>
+        <textarea id="writing-prev-content" rows="6" placeholder="选择目标章节后自动读取前一章已写正文，也可手动粘贴……"></textarea>
+      </section>
+
+      <section class="panel">
+        <h2>4. 写作选项</h2>
+        <div class="field">
+          <label for="writing-author">参考网文作者风格（可选）</label>
+          <input type="text" id="writing-author" placeholder="如：辰东 / 猫腻 / 天蚕土豆，或描述「模仿辰东的宏大世界观与热血文风」">
+        </div>
+        <div class="field">
+          <label>参考风格样例（可选，加载作者作品片段）</label>
+          <div class="row">
+            <label class="btn secondary" for="writing-style-file">📂 选择样例文件</label>
+            <input type="file" id="writing-style-file" accept=".md,.txt,.markdown" hidden>
+            <span class="hint" id="writing-style-file-hint"></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="writing-requirement">写作要求（可选）</label>
+          <textarea id="writing-requirement" rows="2" placeholder="如：本章要有打斗场面 / 结尾留悬念 / 加入幽默对话等"></textarea>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="writing-novel-name">小说名称（保存用）</label>
+            <input type="text" id="writing-novel-name" placeholder="读取时自动填入">
+          </div>
+          <div class="field">
+            <label for="writing-chapter">目标章节（按章节梗概选择）</label>
+            <select id="writing-chapter"><option value="">—— 选择目标章节 ——</option></select>
+          </div>
+          <div class="field">
+            <label for="writing-words">章节字数限制</label>
+            <select id="writing-words">
+              <option value="">不限</option>
+              <option>1000字</option>
+              <option>1500字</option>
+              <option>2000字</option>
+              <option>3000字</option>
+              <option>5000字</option>
+              <option>8000字</option>
+              <option>10000字</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="writing-tone">风格基调</label>
+            <select id="writing-tone">
+              <option value="">默认</option>
+              <option>无厘头</option>
+              <option>轻松搞笑</option>
+              <option>沙雕欢乐</option>
+              <option>黑色幽默</option>
+              <option>荒诞讽刺</option>
+              <option>热血燃向</option>
+              <option>中二热血</option>
+              <option>黑暗深沉</option>
+              <option>冷峻硬核</option>
+              <option>紧张悬疑</option>
+              <option>悬疑烧脑</option>
+              <option>恐怖惊悚</option>
+              <option>悲伤虐心</option>
+              <option>温馨治愈</option>
+              <option>浪漫唯美</option>
+              <option>文艺清新</option>
+              <option>古风雅致</option>
+              <option>史诗宏大</option>
+              <option>现实残酷</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="writing-pov">叙事视角</label>
+            <select id="writing-pov">
+              <option value="">默认</option>
+              <option>第一人称</option>
+              <option>第三人称（限知）</option>
+              <option>第三人称（全知）</option>
+              <option>多视角切换</option>
+            </select>
+          </div>
+        </div>
+      </section>
+      <button id="write-chapter" class="btn primary">✍️ 完成章节写作</button>
+    </section>
+
+    <!-- 连贯性检查 -->
+    <section class="tab-panel" id="panel-coherence">
+      <section class="panel">
+        <h2>1. 检查类型 <span class="req">*</span></h2>
+        <div class="field">
+          <select id="coherence-kind">
+            <option value="summary">章节梗概（逐章剧情梗概）</option>
+            <option value="content">章节正文（已写章节内容）</option>
+            <option value="combined">结合检查（梗概 + 正文一致性）</option>
+          </select>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 选择小说 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="contents-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择小说 ——</option>
+          </select>
+          <button id="load-contents" class="btn secondary">读取章节列表</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>3. 选择要检查的章节批次（可多选）</h2>
+        <div class="chips" id="coherence-chapters">
+          <p class="hint">请先读取章节列表</p>
+        </div>
+      </section>
+      <button id="check-coherence" class="btn primary">🔗 检查连贯性</button>
+
+      <section class="panel" id="coherence-fix-panel" hidden>
+        <h2>4. 修复问题（可选）</h2>
+        <p class="hint">检查后将在此列出发现的问题，可勾选要修复的问题</p>
+        <div class="chips" id="coherence-issues"></div>
+        <div class="row" style="margin-top: 12px;">
+          <button id="fix-issues" class="btn primary">🔧 修复选中问题并覆盖</button>
+          <button id="save-issues" class="btn secondary">💾 保存未选问题</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- 文笔润色 -->
+    <section class="tab-panel" id="panel-polish">
+      <section class="panel">
+        <h2>1. 选择小说 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="polish-novel-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已写正文的小说 ——</option>
+          </select>
+          <button id="load-polish-chapters" class="btn secondary">读取章节列表</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 润色要求（可选）</h2>
+        <textarea id="polish-style" rows="2" placeholder="如：语言更生动形象 / 增加修辞与画面感 / 更简洁有力等"></textarea>
+      </section>
+      <section class="panel">
+        <h2>3. 选择要润色的章节（可多选）</h2>
+        <div class="chips" id="polish-chapters">
+          <p class="hint">请先读取章节列表</p>
+        </div>
+      </section>
+      <button id="polish-chapters-btn" class="btn primary">🖋️ 开始润色</button>
+    </section>
+
+    <div id="status" class="status"></div>
+
+    <section class="panel result-panel" id="result-panel" hidden>
+      <div class="result-head">
+        <h2>📖 结果</h2>
+        <div class="row">
+          <button id="copy" class="btn secondary">复制 Markdown</button>
+          <a id="download" class="btn secondary" download>下载 .md</a>
+          <button id="export-word" class="btn secondary">下载 Word</button>
+        </div>
+      </div>
+      <article id="result" class="outline"></article>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+
+

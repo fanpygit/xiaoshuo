@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+models/
+uploads/
+output/
+*.onnx
+.venv/
+venv/

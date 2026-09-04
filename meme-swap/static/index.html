@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表情包换脸 · 第一版</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>😎 表情包换脸</h1>
+    <p class="subtitle">上传你的人脸照片 + 选一个表情包模板，一键换脸、配文字</p>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>1. 源照片（你的人脸）</h2>
+      <label class="drop" id="source-drop">
+        <input type="file" id="source" accept="image/*" hidden>
+        <img id="source-preview" alt="源照片预览">
+        <span class="hint">点击选择正面清晰照片</span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>2. 目标图（表情包模板，需含人脸）</h2>
+      <div class="row">
+        <select id="template">
+          <option value="">—— 选择内置模板 ——</option>
+        </select>
+        <span class="or">或</span>
+        <label class="btn secondary" for="target">上传目标图</label>
+        <input type="file" id="target" accept="image/*" hidden>
+      </div>
+      <img id="target-preview" alt="目标图预览">
+    </section>
+
+    <section class="panel">
+      <h2>3. 配文字（可选）</h2>
+      <input type="text" id="top-text" placeholder="上排文字，如：早上好">
+      <input type="text" id="bottom-text" placeholder="下排文字，如：我又迟到了">
+    </section>
+
+    <button id="generate" class="btn primary">生成表情包</button>
+    <div id="status" class="status"></div>
+
+    <section class="panel result-panel" id="result-panel" hidden>
+      <h2>结果</h2>
+      <img id="result" alt="生成结果">
+      <a id="download" class="btn primary" download>下载图片</a>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

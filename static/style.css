@@ -1,0 +1,224 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: linear-gradient(160deg, #faf6ef 0%, #f3ede2 100%);
+  color: #2b2620;
+  line-height: 1.6;
+}
+header {
+  background: #3c3228;
+  color: #f7efe3;
+  padding: 26px 16px;
+  text-align: center;
+}
+header h1 { margin: 0; font-size: 26px; }
+.subtitle { margin: 6px 0 0; opacity: .78; font-size: 13px; }
+.container {
+  max-width: 720px;
+  margin: 20px auto;
+  padding: 0 16px 48px;
+}
+.panel {
+  background: #fffdf9;
+  border: 1px solid #e8dfd0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(60, 50, 40, .06);
+}
+.panel h2 { margin: 0 0 12px; font-size: 16px; }
+.req { color: #d64545; }
+
+/* 设置面板 */
+.settings-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #6b5a45;
+  outline: none;
+}
+.settings-panel[open] summary { margin-bottom: 14px; }
+
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block;
+  font-size: 13px;
+  color: #6b5a45;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+.hint { color: #9a8f7e; font-size: 12px; margin: 4px 0 0; }
+
+input[type="text"], input[type="password"], select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d9cfbd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #2b2620;
+  font-family: inherit;
+}
+textarea { resize: vertical; }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #b98a4f;
+  box-shadow: 0 0 0 3px rgba(185, 138, 79, .15);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* 题材多选标签 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; display: inline-block; }
+.chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chip span {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid #d9cfbd;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #6b5a45;
+  background: #fff;
+  transition: all .15s ease;
+  user-select: none;
+}
+.chip:hover span { border-color: #b98a4f; }
+.chip input:checked + span {
+  background: #b98a4f;
+  color: #fff;
+  border-color: #b98a4f;
+}
+.chip input:focus-visible + span {
+  box-shadow: 0 0 0 3px rgba(185, 138, 79, .25);
+}
+
+/* 标签页 */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tab {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 12px;
+  border: 1px solid #e8dfd0;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #6b5a45;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.tab:hover { border-color: #b98a4f; }
+.tab.active { background: #b98a4f; color: #fff; border-color: #b98a4f; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: background .15s ease;
+}
+.btn.primary { background: #b98a4f; color: #fff; width: 100%; }
+.btn.primary:hover { background: #a3773e; }
+.btn.primary:disabled { background: #cbb89a; cursor: not-allowed; }
+.btn.secondary { background: #f1e9dc; color: #6b5a45; }
+.btn.secondary:hover { background: #e7dcc9; }
+
+.status { margin: 12px 0; min-height: 20px; font-size: 14px; color: #d64545; }
+
+/* 结果 */
+.result-panel { display: none; }
+.result-panel.show { display: block; }
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.result-head h2 { margin: 0; }
+.outline {
+  border-top: 1px dashed #e3d9c8;
+  padding-top: 8px;
+  font-size: 15px;
+}
+.outline h2, .outline h3, .outline h4 { color: #5c4a33; margin: 1.1em 0 .4em; }
+.outline h2 { font-size: 18px; }
+.outline h3 { font-size: 16px; }
+.outline h4 { font-size: 15px; }
+.outline p { margin: .5em 0; }
+.outline ul, .outline ol { margin: .5em 0; padding-left: 1.4em; }
+.outline li { margin: .25em 0; }
+.outline code {
+  background: #f3ece0;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: .9em;
+}
+.outline pre {
+  background: #f3ece0;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.outline pre code { background: transparent; padding: 0; }
+.outline blockquote {
+  margin: .6em 0;
+  padding: 6px 12px;
+  border-left: 3px solid #b98a4f;
+  background: #faf5ec;
+  color: #6b5a45;
+}
+.outline hr { border: none; border-top: 1px solid #e3d9c8; margin: 1.2em 0; }
+
+/* 多选下拉 */
+.multiselect { position: relative; }
+.ms-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #d9cfbd; border-radius: 8px;
+  font-size: 14px; background: #fff; color: #2b2620;
+  cursor: pointer; text-align: left; font-family: inherit;
+}
+.ms-trigger:hover { border-color: #b98a4f; }
+.multiselect.open .ms-trigger { border-color: #b98a4f; box-shadow: 0 0 0 3px rgba(185, 138, 79, .15); }
+.ms-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-value.is-empty { color: #9a8f7e; }
+.ms-caret { color: #6b5a45; font-size: 12px; transition: transform .15s ease; }
+.multiselect.open .ms-caret { transform: rotate(180deg); }
+.ms-panel {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 280px; overflow-y: auto;
+  background: #fff; border: 1px solid #e0d7c4; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(60, 50, 40, .12);
+  padding: 6px; display: none;
+}
+.multiselect.open .ms-panel { display: block; }
+.ms-group-label {
+  position: sticky; top: -6px; padding: 4px 8px; margin: 0 -6px;
+  background: #f6f0e5; color: #b98a4f; font-size: 12px; font-weight: 700;
+}
+.ms-option {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #6b5a45;
+}
+.ms-option:hover { background: #f6f0e5; }
+.ms-option input { margin: 0; }
+.ms-option input:checked + span { color: #2b2620; font-weight: 600; }
