@@ -365,3 +365,75 @@ def polish_chapters(chapters, style, cfg):
         {"role": "user", "content": build_polish_prompt(chapters, style)},
     ]
     return _chat(messages, cfg, temperature=0.7)
+
+
+# ---------------- 大纲微调 ----------------
+
+SYSTEM_PROMPT_REFINE = """你是一位资深的中文小说策划编辑与大纲写作专家。请根据用户提供的调整要求，对现有小说大纲进行微调。
+
+要求：
+- 完整保留原大纲的结构（用二级标题 ## 分隔的各节）与总体篇幅
+- 只按用户的调整要求进行针对性修改，未涉及的部分尽量保持原样
+- 调整后必须保证剧情不脱离主线，前后逻辑、人物设定、世界观设定保持一致
+- 分卷分章大纲部分要与调整后的主线、人物、篇幅相匹配，保证连贯性与一致性
+- 直接输出调整后的完整大纲正文，不要输出任何说明或客套话"""
+
+
+def build_refine_prompt(outline, requirement):
+    parts = [
+        "请根据下面的调整要求，对现有小说大纲进行微调。",
+        "",
+        "【调整要求】",
+        requirement,
+        "",
+        "【现有大纲】",
+        outline,
+        "",
+        "请直接输出调整后的完整大纲正文（保持原有 Markdown 结构）。",
+    ]
+    return "\n".join(parts)
+
+
+def refine_outline(outline, requirement, cfg):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_REFINE},
+        {"role": "user", "content": build_refine_prompt(outline, requirement)},
+    ]
+    return _chat(messages, cfg, temperature=0.6)
+
+
+# ---------------- 章节梗概插入 ----------------
+
+SYSTEM_PROMPT_INSERT = """你是一位资深的中文小说编辑，擅长在既有章节梗概之间插入新的章节梗概来丰富内容。
+
+要求：
+- 严格围绕用户提供的小说大纲主线与前后章节剧情，撰写一个新章节的详细梗概
+- 新章节必须与前后章节形成自然的因果衔接与递进，不脱离主线、不产生逻辑矛盾
+- 人物性格、能力、关系、世界观设定与前后章节及大纲保持一致
+- 输出格式必须与现有章节梗概一致，首行为「## 第N章 章节标题」，随后依次为「本章主线 / 关键事件 / 人物与冲突 / 结尾钩子」
+- 只输出新章节梗概正文，不要输出无关说明"""
+
+
+def build_insert_prompt(outline_text, context_chapters, requirement, new_num):
+    parts = [
+        f"请在下面小说现有章节梗概中，插入一个新章节梗概（编号为第{new_num}章）。",
+        "",
+        "【插入要求】",
+        requirement,
+        "",
+    ]
+    if outline_text:
+        parts.extend(["【小说大纲（主线依据）】", outline_text, ""])
+    parts.extend(["【前后章节梗概（用于衔接）】", context_chapters, ""])
+    parts.append(
+        f"请以「## 第{new_num}章 章节标题」为首行，按「本章主线 / 关键事件 / 人物与冲突 / 结尾钩子」格式输出该新章节的完整梗概。"
+    )
+    return "\n".join(parts)
+
+
+def insert_chapter_summary(outline_text, context_chapters, requirement, new_num, cfg):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_INSERT},
+        {"role": "user", "content": build_insert_prompt(outline_text, context_chapters, requirement, new_num)},
+    ]
+    return _chat(messages, cfg, temperature=0.7)

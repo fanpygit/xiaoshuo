@@ -181,6 +181,8 @@ function switchTab(name) {
   // 切到对应标签时刷新下拉列表，确保能看到新生成的小说/章节正文
   if (name === 'coherence') loadCoherenceNovels();
   if (name === 'polish') loadPolishNovels();
+  if (name === 'refine') loadRefineNovels();
+  if (name === 'insert') loadInsertSummaries();
 }
 
 document.querySelectorAll('.tab').forEach((t) => {
@@ -752,6 +754,149 @@ $('polish-chapters-btn').addEventListener('click', async () => {
   if (data && data.message) setStatus(data.message, false);
 });
 
+/* ---------- 大纲微调 ---------- */
+async function loadRefineNovels() {
+  try {
+    const resp = await fetch('/api/novels');
+    const data = await resp.json();
+    const sel = $('refine-novels-select');
+    sel.innerHTML = '<option value="">—— 选择已保存的小说 ——</option>';
+    for (const name of data.novels) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('加载小说列表失败', e);
+  }
+}
+
+$('refine-load-novel').addEventListener('click', async () => {
+  const name = $('refine-novels-select').value;
+  if (!name) { setStatus('请先选择一个小说'); return; }
+  try {
+    const resp = await fetch('/api/novels/' + encodeURIComponent(name));
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '读取失败'); return; }
+    $('refine-outline').value = data.content;
+    $('refine-novel-name').value = name;
+    setStatus('已读取大纲「' + name + '」', false);
+  } catch (e) {
+    setStatus('读取失败：' + e.message);
+  }
+});
+
+$('refine-outline-file').addEventListener('change', () => {
+  const file = $('refine-outline-file').files && $('refine-outline-file').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    $('refine-outline').value = reader.result;
+    const base = file.name.replace(/\.(md|txt|markdown)$/i, '');
+    if (base) $('refine-novel-name').value = base;
+    const hint = $('refine-outline-file-hint');
+    hint.textContent = '已读取：' + file.name;
+    hint.style.color = '#18a058';
+    setStatus('已读取大纲文件「' + file.name + '」', false);
+  };
+  reader.onerror = () => setStatus('读取文件失败');
+  reader.readAsText(file, 'utf-8');
+});
+
+$('refine-outline-btn').addEventListener('click', async () => {
+  const outline = $('refine-outline').value.trim();
+  const requirement = $('refine-requirement').value.trim();
+  if (!outline) { setStatus('请先读取或粘贴现有大纲'); return; }
+  if (!requirement) { setStatus('请填写调整要求'); return; }
+  const data = await postJson('/api/refine-outline', {
+    ...configPayload(),
+    outline,
+    requirement,
+    novel_name: $('refine-novel-name').value.trim(),
+  }, $('refine-outline-btn'), '调整中…', '大纲微调');
+  if (data && data.message) setStatus(data.message, false);
+  if (data && data.saved_path) loadNovels();
+});
+
+/* ---------- 章节梗概插入 ---------- */
+let currentInsertNovel = '';
+
+async function loadInsertSummaries() {
+  try {
+    const resp = await fetch('/api/summaries');
+    const data = await resp.json();
+    const sel = $('insert-summaries-select');
+    sel.innerHTML = '<option value="">—— 选择已生成的章节梗概 ——</option>';
+    for (const name of data.summaries) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('加载章节梗概列表失败', e);
+  }
+}
+
+async function refreshInsertChapters() {
+  if (!currentInsertNovel) return;
+  try {
+    const resp = await fetch('/api/summaries/' + encodeURIComponent(currentInsertNovel) + '/chapters');
+    const data = await resp.json();
+    if (!resp.ok) return;
+    const sel = $('insert-anchor');
+    sel.innerHTML = '<option value="">—— 选择参考章节 ——</option>';
+    for (const f of data.chapters) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f.replace(/\.md$/, '');
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('刷新章节列表失败', e);
+  }
+}
+
+$('insert-load-chapters').addEventListener('click', async () => {
+  const name = $('insert-summaries-select').value;
+  if (!name) { setStatus('请先选择章节梗概'); return; }
+  currentInsertNovel = name;
+  try {
+    const resp = await fetch('/api/summaries/' + encodeURIComponent(name) + '/chapters');
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '读取失败'); return; }
+    const sel = $('insert-anchor');
+    sel.innerHTML = '<option value="">—— 选择参考章节 ——</option>';
+    for (const f of data.chapters) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f.replace(/\.md$/, '');
+      sel.appendChild(opt);
+    }
+    setStatus('已加载 ' + data.chapters.length + ' 章，请选择插入位置', false);
+  } catch (e) {
+    setStatus('读取失败：' + e.message);
+  }
+});
+
+$('insert-chapter-btn').addEventListener('click', async () => {
+  const anchor = $('insert-anchor').value;
+  if (!currentInsertNovel) { setStatus('请先读取章节列表'); return; }
+  if (!anchor) { setStatus('请选择参考章节'); return; }
+  const requirement = $('insert-requirement').value.trim();
+  if (!requirement) { setStatus('请填写新章节梗概的要求'); return; }
+  const data = await postJson('/api/insert-chapter', {
+    ...configPayload(),
+    novel_name: currentInsertNovel,
+    anchor_chapter: anchor,
+    position: $('insert-position').value,
+    requirement,
+  }, $('insert-chapter-btn'), '生成并插入中…', '新章节梗概');
+  if (data && data.message) setStatus(data.message, false);
+  if (data && data.ok) await refreshInsertChapters();
+});
+
 const DEFAULT_CHAPTERS = ['默认（自动）', '1～10章', '10～30章', '30～50章', '50～100章', '100～200章', '200～500章', '500～800章', '800～1200章', '1200～1600章', '1600～2000章', '2000～2500章', '2500章以上'];
 const LENGTH_CHAPTERS = {
   '短故事': ['1章'],
@@ -867,4 +1012,6 @@ loadNovels();
 loadSummaries();
 loadCoherenceNovels();
 loadPolishNovels();
+loadRefineNovels();
+loadInsertSummaries();
 

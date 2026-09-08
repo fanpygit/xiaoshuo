@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>📚 小说写作助手</h1>
-    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色</p>
+    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色 · 大纲微调 · 梗概插章</p>
   </header>
 
   <main class="container">
@@ -67,6 +67,8 @@
       <button class="tab" data-tab="writing">✍️ 章节写作</button>
       <button class="tab" data-tab="coherence">🔗 连贯性检查</button>
       <button class="tab" data-tab="polish">🖋️ 文笔润色</button>
+      <button class="tab" data-tab="refine">🔧 大纲微调</button>
+      <button class="tab" data-tab="insert">➕ 梗概插章</button>
     </nav>
 <!-- 大纲生成 -->
     <section class="tab-panel active" id="panel-outline">
@@ -609,6 +611,74 @@
         </div>
       </section>
       <button id="polish-chapters-btn" class="btn primary">🖋️ 开始润色</button>
+    </section>
+
+    <!-- 大纲微调 -->
+    <section class="tab-panel" id="panel-refine">
+      <section class="panel">
+        <h2>1. 读取现有大纲</h2>
+        <div class="row">
+          <select id="refine-novels-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已保存的小说 ——</option>
+          </select>
+          <button id="refine-load-novel" class="btn secondary">读取大纲文件</button>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <label class="btn secondary" for="refine-outline-file">📂 选择其他路径的大纲文件</label>
+          <input type="file" id="refine-outline-file" accept=".md,.txt,.markdown" hidden>
+          <span class="hint" id="refine-outline-file-hint"></span>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 现有大纲 <span class="req">*</span></h2>
+        <textarea id="refine-outline" rows="14" placeholder="从上方读取，或手动粘贴大纲……"></textarea>
+      </section>
+      <section class="panel">
+        <h2>3. 调整要求 <span class="req">*</span></h2>
+        <textarea id="refine-requirement" rows="4" placeholder="例如：把男主性格改得更果决、增加一条复仇暗线、压缩第三卷篇幅、调整结局走向……"></textarea>
+        <div class="field" style="margin-top: 10px;">
+          <label for="refine-novel-name">小说名称（用于保存，可选）</label>
+          <input type="text" id="refine-novel-name" placeholder="读取大纲时自动填入，留空则不保存到文件">
+        </div>
+      </section>
+      <button id="refine-outline-btn" class="btn primary">🔧 调整大纲</button>
+    </section>
+
+    <!-- 章节梗概插入 -->
+    <section class="tab-panel" id="panel-insert">
+      <section class="panel">
+        <h2>1. 选择小说章节梗概 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="insert-summaries-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已生成的章节梗概 ——</option>
+          </select>
+          <button id="insert-load-chapters" class="btn secondary">读取章节列表</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 选择插入位置 <span class="req">*</span></h2>
+        <div class="grid">
+          <div class="field">
+            <label for="insert-position">插入位置</label>
+            <select id="insert-position">
+              <option value="after">在该章节之后插入</option>
+              <option value="before">在该章节之前插入</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="insert-anchor">参考章节</label>
+            <select id="insert-anchor">
+              <option value="">—— 请先读取章节列表 ——</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint">新章节会插入到所选参考章节的「之前」或「之后」，后续章节编号自动后移</p>
+      </section>
+      <section class="panel">
+        <h2>3. 新章节梗概要求 <span class="req">*</span></h2>
+        <textarea id="insert-requirement" rows="5" placeholder="例如：在第225章与第226章之间插入一章，描写苏寒炼化梼杌煞气、获得新能力的过程，为后续血祭之战做铺垫……"></textarea>
+      </section>
+      <button id="insert-chapter-btn" class="btn primary">➕ 插入新章节梗概</button>
     </section>
 
     <div id="status" class="status"></div>

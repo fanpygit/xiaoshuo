@@ -231,6 +231,42 @@ def _split_fixed(md):
     return result
 
 
+def _chapter_number(fname):
+    """从章节文件名/标题中提取章节号（无则返回 None）。"""
+    m = re.search(r"第\s*(\d+)\s*章", fname or "")
+    if m:
+        return int(m.group(1))
+    m2 = re.search(r"第\s*([一二三四五六七八九十]+)\s*章", fname or "")
+    if m2:
+        return _cn_num(m2.group(1))
+    return None
+
+
+def _retitle_chapter_filename(fname, new_num):
+    """把章节文件名中的章节号替换为新号（如「第225章 梼杌出世.md」->「第226章 梼杌出世.md」）。"""
+    return re.sub(
+        r"第\s*(?:\d+|[一二三四五六七八九十]+)\s*章",
+        f"第{new_num}章",
+        fname or "",
+        count=1,
+    )
+
+
+def _retitle_heading(content, new_num):
+    """替换章节内容首行标题中的章节号。"""
+    lines = (content or "").replace("\r\n", "\n").split("\n")
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("#"):
+            lines[i] = re.sub(
+                r"第\s*(?:\d+|[一二三四五六七八九十]+)\s*章",
+                f"第{new_num}章",
+                line,
+                count=1,
+            )
+            break
+    return "\n".join(lines)
+
+
 @app.route("/")
 def index():
     return send_from_directory(STATIC_DIR, "index.html")
@@ -876,6 +912,174 @@ def polish_chapters():
         "content": polished_content,
         "overwritten": overwritten,
         "message": f"已润色并覆盖 {len(overwritten)} 个章节",
+    })
+
+
+@app.route("/api/refine-outline", methods=["POST"])
+def refine_outline():
+    """根据调整要求微调现有大纲，保证剧情不脱离主线、连贯性与一致性。"""
+    data = request.get_json(silent=True) or {}
+    outline = (data.get("outline") or "").strip()
+    requirement = (data.get("requirement") or "").strip()
+
+    if not outline:
+        return jsonify({"error": "请先读取或粘贴现有大纲"}), 400
+    if not requirement:
+        return jsonify({"error": "请填写调整要求"}), 400
+
+    cfg = _resolve_config(data)
+    if not cfg["api_key"]:
+        return jsonify({"error": "尚未配置 API Key，请先展开「API 设置」填写并保存"}), 400
+
+    novel_name = (data.get("novel_name") or "").strip()
+
+    try:
+        content = llm_client.refine_outline(outline, requirement, cfg)
+    except llm_client.LLMError as exc:
+        return jsonify({"error": str(exc)}), 502
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": f"调整失败：{exc}"}), 500
+
+    saved_path = None
+    if novel_name:
+        saved_path = os.path.join(_get_save_dir(cfg), _safe_name(novel_name) + ".md")
+        try:
+            with open(saved_path, "w", encoding="utf-8") as f:
+                f.write(content)
+        except OSError as exc:
+            return jsonify({"error": f"保存失败：{exc}"}), 500
+
+    return jsonify({
+        "ok": True,
+        "content": content,
+        "saved_path": saved_path,
+        "message": f"已调整并保存到：{saved_path}" if saved_path else "已生成调整后的大纲",
+    })
+
+
+@app.route("/api/insert-chapter", methods=["POST"])
+def insert_chapter():
+    """在两章梗概之间插入新章节梗概，并自动重排后续章节编号，保证连贯性。"""
+    data = request.get_json(silent=True) or {}
+    novel_name = (data.get("novel_name") or "").strip()
+    anchor = (data.get("anchor_chapter") or "").strip()
+    position = (data.get("position") or "after").strip()
+    requirement = (data.get("requirement") or "").strip()
+
+    if not novel_name:
+        return jsonify({"error": "请先选择小说"}), 400
+    if not anchor:
+        return jsonify({"error": "请选择插入参考章节"}), 400
+    if not requirement:
+        return jsonify({"error": "请填写新章节梗概的要求"}), 400
+
+    cfg = _resolve_config(data)
+    if not cfg["api_key"]:
+        return jsonify({"error": "尚未配置 API Key，请先展开「API 设置」填写并保存"}), 400
+
+    safe = _safe_name(novel_name)
+    folder = os.path.join(_get_save_dir(cfg), safe + SUMMARY_SUFFIX)
+    if not os.path.isdir(folder):
+        return jsonify({"error": "未找到该小说的章节梗概文件夹"}), 404
+
+    files = sorted(
+        [f for f in os.listdir(folder) if f.endswith(".md")],
+        key=_chapter_sort_key,
+    )
+    if not files:
+        return jsonify({"error": "该小说暂无章节梗概，请先生成"}), 400
+
+    anchor_file = None
+    anchor_num = None
+    anchor_base = os.path.basename(anchor)
+    for f in files:
+        if f == anchor_base or f[:-3] == anchor_base:
+            anchor_file = f
+            anchor_num = _chapter_number(f)
+            break
+    if anchor_file is None:
+        try:
+            num = int(anchor)
+        except ValueError:
+            num = None
+        if num is not None:
+            for f in files:
+                if _chapter_number(f) == num:
+                    anchor_file = f
+                    anchor_num = num
+                    break
+    if anchor_file is None or anchor_num is None:
+        return jsonify({"error": "未找到参考章节"}), 400
+
+    new_num = anchor_num + 1 if position == "after" else anchor_num
+
+    # 组装参考章节附近的前后梗概作为上下文
+    idx = files.index(anchor_file)
+    ctx_files = files[max(0, idx - 2):min(len(files), idx + 4)]
+    ctx_parts = []
+    for f in ctx_files:
+        with open(os.path.join(folder, f), "r", encoding="utf-8") as fh:
+            ctx_parts.append(fh.read().strip())
+    context_chapters = "\n\n".join(ctx_parts)
+
+    # 读取大纲主线（若存在）
+    outline_text = ""
+    outline_path = os.path.join(_get_save_dir(cfg), safe + ".md")
+    if os.path.exists(outline_path):
+        with open(outline_path, "r", encoding="utf-8") as fh:
+            outline_text = fh.read()
+
+    try:
+        content = llm_client.insert_chapter_summary(
+            outline_text, context_chapters, requirement, new_num, cfg
+        )
+    except llm_client.LLMError as exc:
+        return jsonify({"error": str(exc)}), 502
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": f"生成失败：{exc}"}), 500
+
+    content = (content or "").strip()
+    if not content:
+        return jsonify({"error": "生成的新章节梗概为空"}), 500
+
+    # 提取并规范化新章节标题
+    first_line = content.replace("\r\n", "\n").split("\n")[0].lstrip("#").strip()
+    title = first_line or f"第{new_num}章"
+    title = re.sub(r"第\s*(?:\d+|[一二三四五六七八九十]+)\s*章", f"第{new_num}章", title, count=1)
+    if not re.match(r"第\s*\d+\s*章", title):
+        title = f"第{new_num}章 {title}"
+
+    content = _retitle_heading(content, new_num)
+
+    # 将章节号 >= new_num 的章节整体后移 +1（从大到小，避免覆盖）
+    shift = [f for f in files if (_chapter_number(f) or 0) >= new_num]
+    for f in sorted(shift, key=lambda x: -(_chapter_number(x) or 0)):
+        num = _chapter_number(f)
+        new_f = _retitle_chapter_filename(f, num + 1)
+        path = os.path.join(folder, f)
+        with open(path, "r", encoding="utf-8") as fh:
+            body = fh.read()
+        new_path = os.path.join(folder, new_f)
+        if new_f != f:
+            if os.path.exists(new_path):
+                os.remove(new_path)
+            os.rename(path, new_path)
+        with open(new_path, "w", encoding="utf-8") as fh:
+            fh.write(_retitle_heading(body, num + 1))
+
+    # 写入新章节
+    fname = _safe_name(title) or f"第{new_num}章"
+    new_path = os.path.join(folder, fname + ".md")
+    with open(new_path, "w", encoding="utf-8") as fh:
+        fh.write(content)
+
+    pos_label = "之后" if position == "after" else "之前"
+    return jsonify({
+        "ok": True,
+        "content": content,
+        "filename": fname + ".md",
+        "renumbered": len(shift),
+        "message": f"已在「{anchor_file[:-3]}」{pos_label}插入新章节（第{new_num}章），并重排了 {len(shift)} 个后续章节",
     })
 
 
