@@ -183,6 +183,7 @@ function switchTab(name) {
   if (name === 'polish') loadPolishNovels();
   if (name === 'refine') loadRefineNovels();
   if (name === 'insert') loadInsertSummaries();
+  if (name === 'modify') loadModifySummaries();
 }
 
 document.querySelectorAll('.tab').forEach((t) => {
@@ -897,6 +898,103 @@ $('insert-chapter-btn').addEventListener('click', async () => {
   if (data && data.ok) await refreshInsertChapters();
 });
 
+/* ---------- 章节梗概修改 ---------- */
+let currentModifyNovel = '';
+let modifyChapterFiles = [];
+
+async function loadModifySummaries() {
+  try {
+    const resp = await fetch('/api/summaries');
+    const data = await resp.json();
+    const sel = $('modify-summaries-select');
+    sel.innerHTML = '<option value="">—— 选择已生成的章节梗概 ——</option>';
+    for (const name of data.summaries) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('加载章节梗概列表失败', e);
+  }
+}
+
+$('modify-load-chapters').addEventListener('click', async () => {
+  const name = $('modify-summaries-select').value;
+  if (!name) { setStatus('请先选择章节梗概'); return; }
+  currentModifyNovel = name;
+  try {
+    const resp = await fetch('/api/summaries/' + encodeURIComponent(name) + '/chapters');
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '读取失败'); return; }
+    modifyChapterFiles = data.chapters;
+    const sel = $('modify-chapter-select');
+    sel.innerHTML = '<option value="">—— 选择要修改的章节 ——</option>';
+    for (const f of data.chapters) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f.replace(/\.md$/, '');
+      sel.appendChild(opt);
+    }
+    $('modify-current').value = '';
+    $('modify-coherence-panel').hidden = true;
+    setStatus('已加载 ' + data.chapters.length + ' 章，请选择要修改的章节', false);
+  } catch (e) {
+    setStatus('读取失败：' + e.message);
+  }
+});
+
+$('modify-chapter-select').addEventListener('change', async () => {
+  const f = $('modify-chapter-select').value;
+  if (!f || !currentModifyNovel) { $('modify-current').value = ''; return; }
+  try {
+    const resp = await fetch('/api/summaries/' + encodeURIComponent(currentModifyNovel) + '/chapter/' + encodeURIComponent(f));
+    const data = await resp.json();
+    $('modify-current').value = resp.ok ? (data.content || '') : '';
+  } catch (e) {
+    $('modify-current').value = '';
+  }
+});
+
+$('modify-summary-btn').addEventListener('click', async () => {
+  const chapter = $('modify-chapter-select').value;
+  if (!currentModifyNovel) { setStatus('请先读取章节列表'); return; }
+  if (!chapter) { setStatus('请选择要修改的章节'); return; }
+  const requirement = $('modify-requirement').value.trim();
+  if (!requirement) { setStatus('请填写修改要求'); return; }
+  const btn = $('modify-summary-btn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = '修改并检查中…';
+  setStatus('正在修改并检查连贯性，请稍候…', false);
+  try {
+    const resp = await fetch('/api/modify-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...configPayload(),
+        novel_name: currentModifyNovel,
+        chapter,
+        requirement,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '修改失败'); return; }
+    showResult(data.content, chapter.replace(/\.md$/, ''));
+    $('modify-current').value = data.content || '';
+    if (data.coherence) {
+      $('modify-coherence').innerHTML = renderMarkdown(data.coherence);
+      $('modify-coherence-panel').hidden = false;
+    }
+    setStatus(data.message || '修改完成', false);
+  } catch (e) {
+    setStatus('修改失败：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+
 const DEFAULT_CHAPTERS = ['默认（自动）', '1～10章', '10～30章', '30～50章', '50～100章', '100～200章', '200～500章', '500～800章', '800～1200章', '1200～1600章', '1600～2000章', '2000～2500章', '2500章以上'];
 const LENGTH_CHAPTERS = {
   '短故事': ['1章'],
@@ -1014,4 +1112,5 @@ loadCoherenceNovels();
 loadPolishNovels();
 loadRefineNovels();
 loadInsertSummaries();
+loadModifySummaries();
 

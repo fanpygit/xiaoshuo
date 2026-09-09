@@ -328,3 +328,89 @@ Press CTRL+C to quit
 127.0.0.1 - - [08/Sep/2026 19:20:09] "GET /api/summaries/《我是纨绔》/chapters HTTP/1.1" 200 -
 127.0.0.1 - - [08/Sep/2026 19:20:45] "GET /api/novels HTTP/1.1" 200 -
 127.0.0.1 - - [08/Sep/2026 19:20:47] "GET /api/novels/《我是纨绔》 HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:31:57] "GET /api/summaries/《我是纨绔》 HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:31:57] "GET /api/summaries/《我是纨绔》/chapters HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:31:57] "GET /api/summaries/《我是纨绔》 HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:31:57] "GET /api/summaries/《我是纨绔》/chapters HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:09] "GET /api/summaries/《我是纨绔》/chapter/第6章%20奇货-肥皂.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:11] "GET /api/summaries/《我是纨绔》/chapter/第8章%20小范围爆单.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第1章%20魂穿纨绔.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第2章%20一地烂账.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第3章%20老夫人跟前装乖.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第4章%20重拾纨绔面具.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第5章%20搞钱.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:32:17] "GET /api/contents/《我是纨绔》/chapter/第6章%20奇货-肥皂.md HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:35:09] "POST /api/write-chapter HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:42:51] "POST /api/write-chapter HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:47:38] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:48:07] "GET /api/novels HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 20:48:08] "GET /api/summaries HTTP/1.1" 200 -
+ * Detected change in 'D:\\Code\\xiaoshuo\\app.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\docx_export.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\llm_client.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\llm_client.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\app.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\app.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\app.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\app.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\_test_modify.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\_test_modify.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\_test_modify.py', reloading
+ * Detected change in 'D:\\Code\\xiaoshuo\\_test_modify.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\_test_modify.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\stop_server.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /static/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /static/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/novels HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/contents HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/novels HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:41] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:43] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:46] "GET /api/summaries/《我是纨绔》/chapters HTTP/1.1" 200 -
+127.0.0.1 - - [08/Sep/2026 21:03:48] "GET /api/summaries/《我是纨绔》/chapter/第7章%20皂分两品，当街洗布.md HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:03:31] "GET /api/summaries/《我是纨绔》/chapter/第6章%20奇货-肥皂.md HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:03:48] "GET /api/novels/《我是纨绔》 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:04:00] "GET /api/summaries/《我是纨绔》 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:04:00] "GET /api/summaries/《我是纨绔》/chapters HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:04:17] "GET /api/summaries HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 09:09:43] "POST /api/modify-summary HTTP/1.1" 200 -
+ * Detected change in 'D:\\Software\\anaconda3\\cwp.py', reloading
+ * Detected change in 'D:\\Software\\anaconda3\\Scripts\\spyder-script.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Software\\anaconda3\\pkgs\\menuinst-2.1.2-py312h5da7b33_0\\cwp.py', reloading
+ * Restarting with watchdog (windowsapi)
+ * Debugger is active!
+ * Debugger PIN: 175-552-282
+ * Detected change in 'D:\\Code\\xiaoshuo\\llm_client.py', reloading
+ * Restarting with watchdog (windowsapi)

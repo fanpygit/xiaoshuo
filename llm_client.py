@@ -437,3 +437,82 @@ def insert_chapter_summary(outline_text, context_chapters, requirement, new_num,
         {"role": "user", "content": build_insert_prompt(outline_text, context_chapters, requirement, new_num)},
     ]
     return _chat(messages, cfg, temperature=0.7)
+
+
+# ---------------- 章节梗概修改 ----------------
+
+SYSTEM_PROMPT_MODIFY_SUMMARY = """你是一位资深的中文小说编辑，擅长根据用户要求修改既有章节梗概，同时保证修改后的章节与前后章节自然衔接、逻辑一致。
+
+要求：
+- 严格围绕用户给出的修改要求，对「本章梗概」进行针对性修改，未涉及的部分尽量保持原样
+- 修改后必须与前章梗概、后章梗概形成自然的因果衔接与递进，不脱离主线、不产生逻辑矛盾
+- 人物性格、能力、关系、世界观设定与前章、后章及小说大纲保持一致
+- 输出格式与原文一致：首行为「## 第N章 章节标题」，随后依次为「本章主线 / 关键事件 / 人物与冲突 / 结尾钩子」
+- 只输出修改后的本章梗概正文，不要输出任何说明或客套话"""
+
+
+def build_modify_summary_prompt(current_content, prev_content, next_content, requirement, outline_text):
+    parts = [
+        "请根据下面的修改要求，对「本章梗概」进行修改。",
+        "",
+        "【修改要求】",
+        requirement,
+        "",
+    ]
+    if outline_text:
+        parts.extend(["【小说大纲（主线依据）】", outline_text, ""])
+    parts.append("【前章梗概（用于衔接，需保持一致）】")
+    parts.append(prev_content or "（无）")
+    parts.append("")
+    parts.append("【本章梗概（待修改）】")
+    parts.append(current_content)
+    parts.append("")
+    parts.append("【后章梗概（用于衔接，需保持一致）】")
+    parts.append(next_content or "（无）")
+    parts.append("")
+    parts.append("请直接输出修改后的本章梗概正文，保持原有格式与章节标题。")
+    return "\n".join(parts)
+
+
+def modify_chapter_summary(current_content, prev_content, next_content, requirement, outline_text, cfg):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_MODIFY_SUMMARY},
+        {"role": "user", "content": build_modify_summary_prompt(current_content, prev_content, next_content, requirement, outline_text)},
+    ]
+    return _chat(messages, cfg, temperature=0.6)
+
+
+# ---------------- 梗概修改后的连贯性检查 ----------------
+
+SYSTEM_PROMPT_CHECK_SUMMARY = """你是一位严谨的小说审校编辑。请重点检查「本章梗概」（刚被修改过）与其前章、后章梗概之间的连贯性与一致性。
+
+请重点检查以下方面：
+1. 剧情逻辑：本章与前章、后章之间的事件因果是否连贯，有无矛盾、断层或漏洞
+2. 人物一致性：人物性格、身份、能力、关系是否前后一致
+3. 时间线与场景：时间、地点、场景切换是否合理
+4. 设定一致性：世界观、力量体系、道具等设定是否一致
+5. 伏笔与呼应：前章的结尾钩子是否被本章承接，本章的结尾钩子是否能自然引出后章
+
+请用 Markdown 输出一份针对性的连贯性检查报告：
+## 一、总体评价
+## 二、发现的问题
+每个问题独占一行，严格使用「数字. 问题描述」格式；若没有问题，只写「无」。
+## 三、修改建议
+
+只输出检查报告，不要输出无关说明。"""
+
+
+def build_check_summary_prompt(chapters):
+    parts = ["请检查「本章梗概」修改后与其前章、后章的连贯性与一致性。", ""]
+    for name, content in chapters:
+        parts.extend([f"【{name}】", content, ""])
+    parts.append("请输出连贯性检查报告。")
+    return "\n".join(parts)
+
+
+def check_summary_coherence(chapters, cfg):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_CHECK_SUMMARY},
+        {"role": "user", "content": build_check_summary_prompt(chapters)},
+    ]
+    return _chat(messages, cfg, temperature=0.3)

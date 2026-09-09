@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>📚 小说写作助手</h1>
-    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色 · 大纲微调 · 梗概插章</p>
+    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色 · 大纲微调 · 梗概插章 · 梗概修改</p>
   </header>
 
   <main class="container">
@@ -69,6 +69,7 @@
       <button class="tab" data-tab="polish">🖋️ 文笔润色</button>
       <button class="tab" data-tab="refine">🔧 大纲微调</button>
       <button class="tab" data-tab="insert">➕ 梗概插章</button>
+      <button class="tab" data-tab="modify">🔄 梗概修改</button>
     </nav>
 <!-- 大纲生成 -->
     <section class="tab-panel active" id="panel-outline">
@@ -679,6 +680,41 @@
         <textarea id="insert-requirement" rows="5" placeholder="例如：在第225章与第226章之间插入一章，描写苏寒炼化梼杌煞气、获得新能力的过程，为后续血祭之战做铺垫……"></textarea>
       </section>
       <button id="insert-chapter-btn" class="btn primary">➕ 插入新章节梗概</button>
+    </section>
+
+    <!-- 章节梗概修改 -->
+    <section class="tab-panel" id="panel-modify">
+      <section class="panel">
+        <h2>1. 选择小说章节梗概 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="modify-summaries-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已生成的章节梗概 ——</option>
+          </select>
+          <button id="modify-load-chapters" class="btn secondary">读取章节列表</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 选择要修改的章节 <span class="req">*</span></h2>
+        <div class="field">
+          <select id="modify-chapter-select">
+            <option value="">—— 请先读取章节列表 ——</option>
+          </select>
+        </div>
+        <p class="hint">修改会自动读取该章的前后章节作为上下文，保证衔接一致</p>
+      </section>
+      <section class="panel">
+        <h2>3. 当前梗概（预览）</h2>
+        <textarea id="modify-current" rows="10" readonly placeholder="选择章节后显示当前梗概内容……"></textarea>
+      </section>
+      <section class="panel">
+        <h2>4. 修改要求 <span class="req">*</span></h2>
+        <textarea id="modify-requirement" rows="5" placeholder="例如：把第225章结尾改成苏寒靠自身力量而非神殿援手击退梼杌，为后文埋下与神殿决裂的伏笔……"></textarea>
+      </section>
+      <button id="modify-summary-btn" class="btn primary">🔄 修改梗概并检查连贯性</button>
+      <section class="panel" id="modify-coherence-panel" hidden>
+        <h2>🔗 前后章节连贯性检查报告</h2>
+        <article id="modify-coherence" class="outline"></article>
+      </section>
     </section>
 
     <div id="status" class="status"></div>
