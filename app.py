@@ -1219,6 +1219,122 @@ def modify_summary():
     })
 
 
+@app.route("/api/modify-content", methods=["POST"])
+def modify_content():
+    """按用户要求修改指定章节正文，并检查修改后与前后章节的连贯性与一致性。"""
+    data = request.get_json(silent=True) or {}
+    novel_name = (data.get("novel_name") or "").strip()
+    chapter = (data.get("chapter") or "").strip()
+    requirement = (data.get("requirement") or "").strip()
+
+    if not novel_name:
+        return jsonify({"error": "请先选择小说"}), 400
+    if not chapter:
+        return jsonify({"error": "请选择要修改的章节"}), 400
+    if not requirement:
+        return jsonify({"error": "请填写修改要求"}), 400
+
+    cfg = _resolve_config(data)
+    if not cfg["api_key"]:
+        return jsonify({"error": "尚未配置 API Key，请先展开「API 设置」填写并保存"}), 400
+
+    safe = _safe_name(novel_name)
+    folder = os.path.join(_get_save_dir(cfg), safe + CONTENT_SUFFIX)
+    if not os.path.isdir(folder):
+        return jsonify({"error": "未找到该小说的章节正文文件夹"}), 404
+
+    files = sorted(
+        [f for f in os.listdir(folder) if f.endswith(".md")],
+        key=_chapter_sort_key,
+    )
+    if not files:
+        return jsonify({"error": "该小说暂无章节正文，请先写作"}), 400
+
+    # 定位目标章节文件
+    target_file = None
+    target_base = os.path.basename(chapter)
+    for f in files:
+        if f == target_base or f[:-3] == target_base:
+            target_file = f
+            break
+    if target_file is None:
+        try:
+            num = int(chapter)
+        except ValueError:
+            num = None
+        if num is not None:
+            for f in files:
+                if _chapter_number(f) == num:
+                    target_file = f
+                    break
+    if target_file is None:
+        return jsonify({"error": "未找到要修改的章节"}), 404
+
+    idx = files.index(target_file)
+
+    def _read(f):
+        with open(os.path.join(folder, f), "r", encoding="utf-8") as fh:
+            return fh.read().strip()
+
+    current_content = _read(target_file)
+    prev_content = _read(files[idx - 1]) if idx - 1 >= 0 else ""
+    next_content = _read(files[idx + 1]) if idx + 1 < len(files) else ""
+
+    # 读取大纲主线（若存在）
+    outline_text = ""
+    outline_path = os.path.join(_get_save_dir(cfg), safe + ".md")
+    if os.path.exists(outline_path):
+        with open(outline_path, "r", encoding="utf-8") as fh:
+            outline_text = fh.read()
+
+    try:
+        content = llm_client.modify_chapter_content(
+            current_content, prev_content, next_content, requirement, outline_text, cfg
+        )
+    except llm_client.LLMError as exc:
+        return jsonify({"error": str(exc)}), 502
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": f"修改失败：{exc}"}), 500
+
+    content = (content or "").strip()
+    if not content:
+        return jsonify({"error": "修改结果为空"}), 500
+
+    # 保留原章节标题行（章节号与标题不变）
+    content = _preserve_heading(content, current_content, target_file)
+
+    try:
+        with open(os.path.join(folder, target_file), "w", encoding="utf-8") as fh:
+            fh.write(content)
+    except OSError as exc:
+        return jsonify({"error": f"保存失败：{exc}"}), 500
+
+    # 检查修改后与前章、后章的连贯性与一致性
+    check_chapters = []
+    if prev_content:
+        check_chapters.append((os.path.splitext(files[idx - 1])[0], prev_content))
+    check_chapters.append((os.path.splitext(target_file)[0], content))
+    if next_content:
+        check_chapters.append((os.path.splitext(files[idx + 1])[0], next_content))
+
+    coherence = ""
+    try:
+        coherence = llm_client.check_coherence(check_chapters, cfg)
+    except llm_client.LLMError as exc:
+        coherence = f"（连贯性检查失败：{exc}）"
+    except Exception as exc:  # noqa: BLE001
+        coherence = f"（连贯性检查失败：{exc}）"
+
+    return jsonify({
+        "ok": True,
+        "content": content,
+        "coherence": coherence,
+        "filename": target_file,
+        "message": f"已修改并保存「{target_file[:-3]}」，并完成前后章节连贯性检查",
+    })
+
+
+
 @app.route("/api/export", methods=["POST"])
 def export_docx():
     """把 Markdown 大纲导出为 Word (.docx) 文件。"""

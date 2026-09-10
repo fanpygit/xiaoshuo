@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>📚 小说写作助手</h1>
-    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色 · 大纲微调 · 梗概插章 · 梗概修改</p>
+    <p class="subtitle">大纲生成 · 章节梗概 · 章节写作 · 连贯性检查 · 文笔润色 · 大纲微调 · 梗概插章 · 梗概修改 · 正文修改</p>
   </header>
 
   <main class="container">
@@ -70,6 +70,7 @@
       <button class="tab" data-tab="refine">🔧 大纲微调</button>
       <button class="tab" data-tab="insert">➕ 梗概插章</button>
       <button class="tab" data-tab="modify">🔄 梗概修改</button>
+      <button class="tab" data-tab="modify-content">📝 正文修改</button>
     </nav>
 <!-- 大纲生成 -->
     <section class="tab-panel active" id="panel-outline">
@@ -714,6 +715,41 @@
       <section class="panel" id="modify-coherence-panel" hidden>
         <h2>🔗 前后章节连贯性检查报告</h2>
         <article id="modify-coherence" class="outline"></article>
+      </section>
+    </section>
+
+    <!-- 章节正文修改 -->
+    <section class="tab-panel" id="panel-modify-content">
+      <section class="panel">
+        <h2>1. 选择小说章节正文 <span class="req">*</span></h2>
+        <div class="row">
+          <select id="modify-content-novel-select" style="flex: 1; min-width: 200px;">
+            <option value="">—— 选择已写正文的小说 ——</option>
+          </select>
+          <button id="modify-content-load-chapters" class="btn secondary">读取章节列表</button>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>2. 选择要修改的章节 <span class="req">*</span></h2>
+        <div class="field">
+          <select id="modify-content-chapter-select">
+            <option value="">—— 请先读取章节列表 ——</option>
+          </select>
+        </div>
+        <p class="hint">修改会自动读取该章的前后章节正文作为上下文，保证衔接一致</p>
+      </section>
+      <section class="panel">
+        <h2>3. 当前正文（预览）</h2>
+        <textarea id="modify-content-current" rows="10" readonly placeholder="选择章节后显示当前正文内容……"></textarea>
+      </section>
+      <section class="panel">
+        <h2>4. 修改要求 <span class="req">*</span></h2>
+        <textarea id="modify-content-requirement" rows="5" placeholder="例如：把第225章结尾改成苏寒靠自身力量而非神殿援手击退梼杌，为后文埋下与神殿决裂的伏笔……"></textarea>
+      </section>
+      <button id="modify-content-btn" class="btn primary">📝 修改正文并检查连贯性</button>
+      <section class="panel" id="modify-content-coherence-panel" hidden>
+        <h2>🔗 前后章节连贯性检查报告</h2>
+        <article id="modify-content-coherence" class="outline"></article>
       </section>
     </section>
 

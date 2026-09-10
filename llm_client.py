@@ -516,3 +516,48 @@ def check_summary_coherence(chapters, cfg):
         {"role": "user", "content": build_check_summary_prompt(chapters)},
     ]
     return _chat(messages, cfg, temperature=0.3)
+
+
+# ---------------- 章节正文修改 ----------------
+
+SYSTEM_PROMPT_MODIFY_CONTENT = """你是一位资深的中文小说编辑，擅长根据用户要求修改既有章节正文，同时保证修改后的章节与前后章节自然衔接、逻辑一致。
+
+要求：
+- 严格围绕用户给出的修改要求，对「本章正文」进行针对性修改，未涉及的部分尽量保持原样
+- 修改后必须与前章正文、后章正文形成自然的因果衔接与递进，不脱离主线、不产生逻辑矛盾
+- 人物性格、能力、关系、世界观设定与前章、后章及小说大纲保持一致
+- 保持原文的叙事视角、风格基调与篇幅节奏，不要无谓地增删情节
+- 输出完整修改后的本章正文，格式与原文一致（若原文首行有章节标题则保留该标题行）
+- 只输出修改后的本章正文，不要输出任何说明或客套话"""
+
+
+def build_modify_content_prompt(current_content, prev_content, next_content, requirement, outline_text):
+    parts = [
+        "请根据下面的修改要求，对「本章正文」进行修改。",
+        "",
+        "【修改要求】",
+        requirement,
+        "",
+    ]
+    if outline_text:
+        parts.extend(["【小说大纲（主线依据）】", outline_text, ""])
+    parts.append("【前章正文（用于衔接，需保持一致）】")
+    parts.append(prev_content or "（无）")
+    parts.append("")
+    parts.append("【本章正文（待修改）】")
+    parts.append(current_content)
+    parts.append("")
+    parts.append("【后章正文（用于衔接，需保持一致）】")
+    parts.append(next_content or "（无）")
+    parts.append("")
+    parts.append("请直接输出修改后的本章正文完整内容，保持原有格式与章节标题。")
+    return "\n".join(parts)
+
+
+def modify_chapter_content(current_content, prev_content, next_content, requirement, outline_text, cfg):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT_MODIFY_CONTENT},
+        {"role": "user", "content": build_modify_content_prompt(current_content, prev_content, next_content, requirement, outline_text)},
+    ]
+    return _chat(messages, cfg, temperature=0.6)
+

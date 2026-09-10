@@ -10,6 +10,8 @@
 - **✍️ 章节写作**：支持从保存路径选择章节梗概文件作为写作上下文
 - **✍️ 章节写作**：根据故事梗概与前后章节上下文完成指定章节正文，支持**章节字数限制**
 - **🔗 连贯性检查**：对比前后章节，检查剧情、人物、时间线、设定、伏笔的一致性并给出修改建议
+- **🔄 梗概修改**：读取指定章节梗概，按要求修改并自动检查与前后章节的连贯性
+- **📝 正文修改**：读取指定章节正文，按要求修改并保证与前后章节正文衔接顺畅（自动读取前/后章正文与大纲作为上下文）
 - 支持题材（下拉多选，按拼音首字母排序）/ 情节标签（下拉多选，按拼音首字母排序）/ 篇幅 / 总章节数 / 叙事视角 / 风格基调 / 额外要求等选项
 - **大纲文件化保存**：生成时填写「小说名称」，自动按名称保存为 `.md` 文件到可配置的保存路径
 - 支持任意 OpenAI 兼容接口，默认 DeepSeek，可切换 OpenAI、Moonshot、Kimi 等
@@ -98,6 +100,8 @@ xiaoshuo/
 | POST | `/api/expand-chapters` | 逐章梗概，JSON：`{outline, chapters, words, ...}` |
 | POST | `/api/write-chapter` | 章节写作，JSON：`{outline, context, chapter, words, tone, pov, ...}` |
 | POST | `/api/check-coherence` | 连贯性检查，JSON：`{before, after, ...}` |
+| POST | `/api/modify-summary` | 修改指定章节梗概并检查连贯性，JSON：`{novel_name, chapter, requirement}` |
+| POST | `/api/modify-content` | 修改指定章节正文并检查连贯性，JSON：`{novel_name, chapter, requirement}` |
 | POST | `/api/export` | 导出 Word，JSON：`{outline, title}`，返回 `.docx` 文件 |
 
 > 以上接口均可附带 `base_url`、`model`、`api_key` 以临时覆盖服务端配置。

@@ -184,6 +184,7 @@ function switchTab(name) {
   if (name === 'refine') loadRefineNovels();
   if (name === 'insert') loadInsertSummaries();
   if (name === 'modify') loadModifySummaries();
+  if (name === 'modify-content') loadModifyContentNovels();
 }
 
 document.querySelectorAll('.tab').forEach((t) => {
@@ -995,6 +996,101 @@ $('modify-summary-btn').addEventListener('click', async () => {
   }
 });
 
+/* ---------- 章节正文修改 ---------- */
+let currentModifyContentNovel = '';
+
+async function loadModifyContentNovels() {
+  try {
+    const resp = await fetch('/api/contents');
+    const data = await resp.json();
+    const sel = $('modify-content-novel-select');
+    sel.innerHTML = '<option value="">—— 选择已写正文的小说 ——</option>';
+    for (const name of data.contents) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+  } catch (e) {
+    console.error('加载章节正文列表失败', e);
+  }
+}
+
+$('modify-content-load-chapters').addEventListener('click', async () => {
+  const name = $('modify-content-novel-select').value;
+  if (!name) { setStatus('请先选择小说'); return; }
+  currentModifyContentNovel = name;
+  try {
+    const resp = await fetch('/api/contents/' + encodeURIComponent(name) + '/chapters');
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '读取失败'); return; }
+    const sel = $('modify-content-chapter-select');
+    sel.innerHTML = '<option value="">—— 选择要修改的章节 ——</option>';
+    for (const f of data.chapters) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f.replace(/\.md$/, '');
+      sel.appendChild(opt);
+    }
+    $('modify-content-current').value = '';
+    $('modify-content-coherence-panel').hidden = true;
+    setStatus('已加载 ' + data.chapters.length + ' 章，请选择要修改的章节', false);
+  } catch (e) {
+    setStatus('读取失败：' + e.message);
+  }
+});
+
+$('modify-content-chapter-select').addEventListener('change', async () => {
+  const f = $('modify-content-chapter-select').value;
+  if (!f || !currentModifyContentNovel) { $('modify-content-current').value = ''; return; }
+  try {
+    const resp = await fetch('/api/contents/' + encodeURIComponent(currentModifyContentNovel) + '/chapter/' + encodeURIComponent(f));
+    const data = await resp.json();
+    $('modify-content-current').value = resp.ok ? (data.content || '') : '';
+  } catch (e) {
+    $('modify-content-current').value = '';
+  }
+});
+
+$('modify-content-btn').addEventListener('click', async () => {
+  const chapter = $('modify-content-chapter-select').value;
+  if (!currentModifyContentNovel) { setStatus('请先读取章节列表'); return; }
+  if (!chapter) { setStatus('请选择要修改的章节'); return; }
+  const requirement = $('modify-content-requirement').value.trim();
+  if (!requirement) { setStatus('请填写修改要求'); return; }
+  const btn = $('modify-content-btn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = '修改并检查中…';
+  setStatus('正在修改并检查连贯性，请稍候…', false);
+  try {
+    const resp = await fetch('/api/modify-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...configPayload(),
+        novel_name: currentModifyContentNovel,
+        chapter,
+        requirement,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) { setStatus(data.error || '修改失败'); return; }
+    showResult(data.content, chapter.replace(/\.md$/, ''));
+    $('modify-content-current').value = data.content || '';
+    if (data.coherence) {
+      $('modify-content-coherence').innerHTML = renderMarkdown(data.coherence);
+      $('modify-content-coherence-panel').hidden = false;
+    }
+    setStatus(data.message || '修改完成', false);
+  } catch (e) {
+    setStatus('修改失败：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+
 const DEFAULT_CHAPTERS = ['默认（自动）', '1～10章', '10～30章', '30～50章', '50～100章', '100～200章', '200～500章', '500～800章', '800～1200章', '1200～1600章', '1600～2000章', '2000～2500章', '2500章以上'];
 const LENGTH_CHAPTERS = {
   '短故事': ['1章'],
@@ -1113,4 +1209,5 @@ loadPolishNovels();
 loadRefineNovels();
 loadInsertSummaries();
 loadModifySummaries();
+loadModifyContentNovels();
 
